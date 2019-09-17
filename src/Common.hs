@@ -5,6 +5,7 @@ module Common
   , Field
   , CellCoord
   , CellValue
+  , SudokuEvent (..)
   ) where
 
 -- | Game Difficulties
@@ -38,3 +39,7 @@ type GameField = [[Cell]]
 -- first  is number of column
 -- second is number of row
 type CellCoord = (Int, Int)
+
+
+data SudokuEvent
+  = OpenCell CellCoord CellValue

@@ -2,12 +2,14 @@ module UI.MainUI
   ( makeUI
   ) where
 
-import  Common (Field, GameField, CellCoord, Cell (..))
+import  Common (Field, GameField, CellCoord, Cell (..), SudokuEvent (..), CellValue)
 import  Sudoku (GameEnv, GameEnv (..), builtField, currentGameField, numHolder)
-import  UI.CoordinatesConverter (xyToCellCoord)
+import  EventHandler (handleEvent)
+import  UI.CoordinatesConverter (xyToCellCoord, xyToButton)
 import  UI.FieldRender (renderField)
-import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv)
+import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers)
 
+import  Control.Monad.State  (State, execState, get, put)
 import  Control.Lens.Getter ((^.))
 import  Control.Lens.Setter ((.~), (%~))
 import  Data.Function ((&))
@@ -21,9 +23,24 @@ import  Graphics.Gloss.Interface.IO.Interact
 
 makeUI :: GameEnv -> IO ()
 makeUI newGameEnv =
-  let newUIEnv = UIEnv NoTarget
+  let newUIEnv = UIEnv NoTarget getCountOfNumber
       env      = SudokuEnv newUIEnv newGameEnv
   in render env
+  where
+    getCountOfNumber :: Map.Map CellValue Int
+    getCountOfNumber =
+      let openedCellValues = Map.elems $ newGameEnv ^. numHolder
+      in execState (mapM collectMap openedCellValues) Map.empty
+
+    collectMap :: CellValue -> State (Map.Map CellValue Int) ()
+    collectMap currentValue = do
+      currMap <- get
+
+      let count  = Map.findWithDefault 0 currentValue currMap
+          newMap = Map.insert currentValue (count + 1) currMap
+      
+      put newMap
+      return ()
 
 render :: SudokuEnv -> IO ()
 render env =
@@ -33,58 +50,41 @@ render env =
     100
     env
     renderWorld
-    handleEvent
+    handleUIEvent
     (\_ -> id)
 
 renderWorld :: SudokuEnv -> Picture
 renderWorld env = renderField env
 
-handleEvent :: Event -> SudokuEnv -> SudokuEnv
-handleEvent (EventKey (MouseButton LeftButton) _ _ point) env = 
+handleUIEvent :: Event -> SudokuEnv -> SudokuEnv
+handleUIEvent (EventKey (MouseButton LeftButton) _ _ point) env = 
   let maybeCell = xyToCellCoord point
   in case maybeCell of
-    Nothing    -> env
+    Nothing    -> openCell (xyToButton point) env
     Just coord ->
       let openedCell = Map.lookup coord (env ^. (gameEnv . numHolder))
           newTarget  = case openedCell of
             Nothing    -> Target coord
             Just value -> NumberTarget coord value
       in env & uiEnv . curTarget .~ newTarget
-handleEvent (EventKey key@(SpecialKey _) _ _ _) env =
+handleUIEvent (EventKey key@(SpecialKey _) _ _ _) env = 
+  openCell (getKeyEvent key) env
+handleUIEvent _ env = env
+
+openCell :: Maybe CellValue -> SudokuEnv -> SudokuEnv
+openCell Nothing  env  = env
+openCell (Just n) env  =
   let target = env ^. (uiEnv . curTarget)
   in case target of
     NoTarget         -> env
     NumberTarget _ _ -> env
-    Target coord     -> let number = getKeyEvent key
-                        in  openCell env number coord
-handleEvent _ env = env
-
-openCell :: SudokuEnv -> Maybe Int -> CellCoord -> SudokuEnv
-openCell env Nothing _ = env
-openCell env (Just n) (j, i) =
-  let cell      = ((env ^. (gameEnv . currentGameField)) !! i) !! j
-      valueCell = ((env ^. (gameEnv . builtField)) !! i) !! j
-  in case cell of
-    Opened _ -> env
-    Closed   -> if (n == valueCell)
-                  then updEnv
-                  else env
-  where
-    updEnv :: SudokuEnv
-    updEnv =
-      let newField = updGameField (env ^. (gameEnv . currentGameField))
-      in env
-         & gameEnv . currentGameField .~ newField
-         & gameEnv . numHolder %~ (Map.insert (j, i) n)
-         & uiEnv . curTarget .~ NoTarget
-
-    updGameField :: GameField -> GameField
-    updGameField field =
-      let (a, b)   = splitAt i field
-          row      = head b
-          (ai, bi) = splitAt j row
-          updRow   = ai ++ (Opened n : (tail bi))
-      in a ++ (updRow : (tail b))
+    Target coord     -> 
+      case handleEvent (OpenCell coord n) (env ^. gameEnv) of
+        Left _           -> env
+        Right newGameEnv -> env
+            & gameEnv .~ newGameEnv
+            & uiEnv . curTarget .~ NoTarget
+            & uiEnv . countOfNumbers %~ (Map.update (\v -> Just (v + 1)) n)
 
 getKeyEvent :: Key -> Maybe Int
 getKeyEvent (SpecialKey key) = 

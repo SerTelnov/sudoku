@@ -2,12 +2,15 @@ module UI.CoordinatesConverter
   ( blockCoordToXY
   , cellCoordToXY
   , xyToCellCoord
+  , buttonToXY
+  , xyToButton
 
   , blockSize
   , cellSize
+  , buttonSize
   ) where
 
-import  Common (CellCoord)
+import  Common (CellCoord, CellValue)
 
 cellSize, blockSize, startYPoint, startXPoint :: Float
 cellSize = 45.0
@@ -15,6 +18,10 @@ blockSize = cellSize * 3
 startYPoint = 270.0
 startXPoint = -175.0
 
+buttonStartXPoint, buttonStartYPoint, buttonSize :: Float
+buttonStartXPoint = -200.0
+buttonStartYPoint = -150.0
+buttonSize = 50.0
 
 blockCoordToXY :: (Int, Int) -> (Float, Float)
 blockCoordToXY (bx, by) =
@@ -36,3 +43,18 @@ xyToCellCoord (x, y) =
   in if (cx < 0 || cx > 8 || cy < 0 || cy > 8)
     then Nothing
     else Just (cx, cy)
+
+buttonToXY :: Int -> (Float, Float)
+buttonToXY n =
+  let x = buttonStartXPoint + buttonSize * (realToFrac n)
+  in (x, buttonStartYPoint)
+
+xyToButton :: (Float, Float) -> Maybe CellValue
+xyToButton (x, y) =
+  let n = (+ 9) <$> round $ (x + buttonStartXPoint) / buttonSize
+  in if n > 0 && n < 10 && isButtonBlock
+     then Just n
+     else Nothing
+  where
+    isButtonBlock :: Bool
+    isButtonBlock = (round $ (y - buttonStartYPoint) / buttonSize) == 0

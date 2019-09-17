@@ -6,7 +6,7 @@ import  Sudoku (generateGame, makeGameEnv)
 
 main :: IO ()
 main = do
-  (field, gameField) <- generateGame Hard
+  (field, gameField) <- generateGame Easy
   let env = makeGameEnv field gameField
 
   makeUI env

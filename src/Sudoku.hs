@@ -25,7 +25,7 @@ data GameEnv = GameEnv
   { _builtField :: Field -- ^ generated field
   , _currentGameField :: GameField -- ^ current game state
   , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 makeLenses ''GameEnv
 

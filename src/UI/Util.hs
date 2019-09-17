@@ -8,12 +8,15 @@ module UI.Util
   , curTarget
   , uiEnv
   , gameEnv
+  , countOfNumbers
   ) where
 
 import  Common (CellCoord, CellValue)
 import  Sudoku (GameEnv (..))
 
 import  Control.Lens.Combinators (makeLenses)
+
+import  qualified Data.Map.Strict as Map
 
 -- | User target
 data Target
@@ -24,6 +27,7 @@ data Target
 
 data UIEnv = UIEnv
   { _curTarget :: Target
+  , _countOfNumbers :: Map.Map CellValue Int
   } deriving (Show)
 
 makeLenses ''UIEnv

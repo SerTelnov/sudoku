@@ -4,12 +4,13 @@ module UI.FieldRender
 
 import  Common (Cell (..), GameField, CellCoord, CellValue)
 import  Sudoku (GameEnv, GameEnv (..), currentGameField, numHolder)
-import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, blockCoordToXY)
-import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv)
+import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, blockCoordToXY, buttonToXY, buttonSize)
+import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers)
 
 import  Control.Monad.State (State, evalState, get, put)
-import  Control.Monad.Reader (ReaderT, runReaderT, ask)
 import  Control.Lens.Getter ((^.))
+
+import  qualified Data.Map.Strict as Map
 
 import  qualified Graphics.Gloss.Data.Picture as Pic
 import  Graphics.Gloss.Data.Color (black, greyN, white, withBlue)
@@ -54,14 +55,13 @@ isSameLogicArea (Target (x, y)) (cx, cy) = x == cx || y == cy || isSameBlock
 
 renderField :: SudokuEnv -> Pic.Picture
 renderField env =
-  let curField      = env ^. (gameEnv . currentGameField)
-      fieldPictures = evalState (runReaderT (fieldToPictures curField) env) 0
-      fieldPicture  = Pic.pictures fieldPictures
-      targetStr     = Pic.translate (-250) (-270) (Pic.scale 0.25 0.15 $ Pic.color black $ Pic.text $ show $ env ^. (uiEnv . curTarget))
-  in Pic.pictures $ (targetStr : fieldPicture : renderBlocks : [])
+  let curField       = env ^. (gameEnv . currentGameField)
+      fieldPictures  = evalState (fieldToPictures curField) 0
+      fieldPicture   = Pic.pictures fieldPictures
+      buttonsPicture = renderButtons (env ^. uiEnv)
+  in Pic.pictures $ fieldPicture : renderBlocks : buttonsPicture : []
   where
-    -- todo remove ReaderT
-    fieldToPictures :: GameField -> ReaderT SudokuEnv (State Int) [Pic.Picture]
+    fieldToPictures :: GameField -> State Int [Pic.Picture]
     fieldToPictures [] = return []
     fieldToPictures (row : rest) = do
       rowNum <- get
@@ -118,3 +118,22 @@ renderBlocks =
   where
     blockPicture :: Pic.Picture
     blockPicture = Pic.Color black (Pic.rectangleWire blockSize blockSize)
+
+
+renderButtons :: UIEnv -> Pic.Picture
+renderButtons env =
+  let buttonsXY  = map buttonToXY [0..8]
+      zipButtons = zip [1..9] buttonsXY
+  in Pic.Pictures $ map (\(n, (x, y)) -> Pic.translate x y (buttonPicture n)) zipButtons
+  where
+    buttonPicture :: CellValue -> Pic.Picture
+    buttonPicture n =
+      let isActiveButton = (Map.findWithDefault 0 n (env ^. countOfNumbers)) /= 9
+      in case isActiveButton of
+        True -> Pic.Pictures
+          [ Pic.Color (greyN 0.95) (Pic.rectangleSolid buttonSize buttonSize)
+          , Pic.Color black        (Pic.rectangleWire buttonSize buttonSize)
+          , Pic.scale 0.25 0.15 $ Pic.color black $ Pic.text $ show n ]
+        False -> Pic.Pictures
+          [ Pic.Color (greyN 0.75) (Pic.rectangleSolid buttonSize buttonSize)
+          , Pic.Color black        (Pic.rectangleWire buttonSize buttonSize) ]
