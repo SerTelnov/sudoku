@@ -36,7 +36,7 @@ spec = do
           [[Opened 1, Opened 2], [Opened 2, Closed]]
       it "Wrong value to open" $ do
         let eventResult = openCell testEnv (1, 0) 3
-        eventResult `shouldBe` (Left "Wrong cell value")
+        eventResult `shouldBe` (Left WrongValue)
       it "Already opened cell" $ do
         let eventResult = openCell testEnv (0, 0) 1
-        eventResult `shouldBe` (Left "Cell is already open")
+        eventResult `shouldBe` (Left AlreadyOpen)

@@ -15,12 +15,12 @@ import  Common (CellCoord, CellValue)
 cellSize, blockSize, startYPoint, startXPoint :: Float
 cellSize = 45.0
 blockSize = cellSize * 3
-startYPoint = 270.0
+startYPoint = 170.0
 startXPoint = -175.0
 
 buttonStartXPoint, buttonStartYPoint, buttonSize :: Float
 buttonStartXPoint = -200.0
-buttonStartYPoint = -150.0
+buttonStartYPoint = -250.0
 buttonSize = 50.0
 
 blockCoordToXY :: (Int, Int) -> (Float, Float)
@@ -28,7 +28,6 @@ blockCoordToXY (bx, by) =
   let x = startXPoint + blockSize * (realToFrac bx) + cellSize
       y = startYPoint - blockSize * (realToFrac by) - cellSize
   in (x, y)
-
 
 cellCoordToXY :: CellCoord -> (Float, Float)
 cellCoordToXY (cx, cy) =

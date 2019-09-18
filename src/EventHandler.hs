@@ -1,11 +1,9 @@
 module EventHandler
-  ( handleEvent
-
-  , openCell
+  ( openCell
   ) where
 
-import  Common (SudokuEvent (..), Cell (..), GameField, CellCoord, CellValue)
-import  Sudoku (GameEnv (..), currentGameField, numHolder, builtField)
+import  Common (Cell (..), GameField, CellCoord, CellValue, OpenCellError (..), 
+                GameEnv (..), currentGameField, numHolder, builtField)
 
 import  Control.Lens.Getter ((^.))
 import  Control.Lens.Setter ((.~), (%~))
@@ -14,18 +12,15 @@ import  Data.Function ((&))
 import  qualified Data.Map.Strict as Map
 
 
-handleEvent :: SudokuEvent -> GameEnv -> Either String GameEnv
-handleEvent (OpenCell coord n) env = openCell env coord n
-
-openCell :: GameEnv -> CellCoord -> CellValue -> Either String GameEnv
+openCell :: GameEnv -> CellCoord -> CellValue -> Either OpenCellError GameEnv
 openCell env coord@(columnIndex, rowIndex) value =
   let cell        = ((env ^. currentGameField) !! rowIndex) !! columnIndex
       actualValue = ((env ^. builtField) !! rowIndex) !! columnIndex
   in case cell of
-    Opened _ -> Left "Cell is already open"
+    Opened _ -> Left AlreadyOpen
     Closed   -> if value == actualValue
                   then Right updEnv
-                  else Left "Wrong cell value"
+                  else Left WrongValue
   where
     updEnv :: GameEnv
     updEnv =

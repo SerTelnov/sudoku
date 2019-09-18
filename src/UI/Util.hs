@@ -9,25 +9,25 @@ module UI.Util
   , uiEnv
   , gameEnv
   , countOfNumbers
+  , numberOfMistakes
   ) where
 
-import  Common (CellCoord, CellValue)
-import  Sudoku (GameEnv (..))
-
+import  Common (CellCoord, CellValue, GameEnv (..))
 import  Control.Lens.Combinators (makeLenses)
 
 import  qualified Data.Map.Strict as Map
 
 -- | User target
 data Target
-  = NoTarget -- ^ no click (start of game)
-  | Target CellCoord -- ^ click on closed cell
+  = NoTarget                         -- ^ no click (start of game)
+  | Target CellCoord                 -- ^ click on closed cell
   | NumberTarget CellCoord CellValue -- ^ click on opened cell
   deriving (Eq, Show)
 
 data UIEnv = UIEnv
   { _curTarget :: Target
   , _countOfNumbers :: Map.Map CellValue Int
+  , _numberOfMistakes :: Int
   } deriving (Show)
 
 makeLenses ''UIEnv

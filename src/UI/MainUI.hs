@@ -2,16 +2,18 @@ module UI.MainUI
   ( makeUI
   ) where
 
-import  Common (Field, GameField, CellCoord, Cell (..), SudokuEvent (..), CellValue)
-import  Sudoku (GameEnv, GameEnv (..), builtField, currentGameField, numHolder)
-import  EventHandler (handleEvent)
+import  Common (Field, GameField, CellCoord, Cell (..), CellValue,
+                OpenCellError (..), GameEnv, GameEnv (..), 
+                builtField, currentGameField, numHolder)
+import  EventHandler (openCell)
 import  UI.CoordinatesConverter (xyToCellCoord, xyToButton)
 import  UI.FieldRender (renderField)
-import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers)
+import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers, numberOfMistakes)
 
 import  Control.Monad.State  (State, execState, get, put)
 import  Control.Lens.Getter ((^.))
-import  Control.Lens.Setter ((.~), (%~))
+import  Control.Lens.Setter ((.~), (%~), (+~))
+import  Data.Char (isDigit, digitToInt)
 import  Data.Function ((&))
 import  qualified Data.Map.Strict as Map
 
@@ -23,7 +25,7 @@ import  Graphics.Gloss.Interface.IO.Interact
 
 makeUI :: GameEnv -> IO ()
 makeUI newGameEnv =
-  let newUIEnv = UIEnv NoTarget getCountOfNumber
+  let newUIEnv = UIEnv NoTarget getCountOfNumber 0
       env      = SudokuEnv newUIEnv newGameEnv
   in render env
   where
@@ -45,9 +47,9 @@ makeUI newGameEnv =
 render :: SudokuEnv -> IO ()
 render env =
   play
-    (InWindow "Sudoku" (500, 600) (5, 5))
+    (InWindow "Sudoku" (470, 600) (5, 5))
     (greyN 0.9)
-    100
+    50
     env
     renderWorld
     handleUIEvent
@@ -60,46 +62,42 @@ handleUIEvent :: Event -> SudokuEnv -> SudokuEnv
 handleUIEvent (EventKey (MouseButton LeftButton) _ _ point) env = 
   let maybeCell = xyToCellCoord point
   in case maybeCell of
-    Nothing    -> openCell (xyToButton point) env
+    Nothing    -> tryOpenCell (xyToButton point) env
     Just coord ->
       let openedCell = Map.lookup coord (env ^. (gameEnv . numHolder))
           newTarget  = case openedCell of
             Nothing    -> Target coord
             Just value -> NumberTarget coord value
       in env & uiEnv . curTarget .~ newTarget
-handleUIEvent (EventKey key@(SpecialKey _) _ _ _) env = 
-  openCell (getKeyEvent key) env
+-- handleUIEvent (EventKey (Char key) Down (Modifiers { shift = Down }) _) env = 
+--   case key of
+--     'N' -> env %~ makeNewGame (handleEvent RestartGame)
+--     'L' -> handleEvent (ChangeGameLevel) env
+--     'H' -> handleEvent RestartGame
+--     _   -> env
+handleUIEvent (EventKey (Char key) _ _ _) env =
+  tryOpenCell (getValueFromButton key) env
 handleUIEvent _ env = env
 
-openCell :: Maybe CellValue -> SudokuEnv -> SudokuEnv
-openCell Nothing  env  = env
-openCell (Just n) env  =
+tryOpenCell :: Maybe CellValue -> SudokuEnv -> SudokuEnv
+tryOpenCell Nothing  env  = env
+tryOpenCell (Just n) env  =
   let target = env ^. (uiEnv . curTarget)
   in case target of
     NoTarget         -> env
     NumberTarget _ _ -> env
     Target coord     -> 
-      case handleEvent (OpenCell coord n) (env ^. gameEnv) of
-        Left _           -> env
-        Right newGameEnv -> env
+      case openCell (env ^. gameEnv) coord n of
+        Left WrongValue -> env
+            & uiEnv . numberOfMistakes +~ 1
+        Left  _                    -> env
+        Right newGameEnv           -> env
             & gameEnv .~ newGameEnv
             & uiEnv . curTarget .~ NoTarget
             & uiEnv . countOfNumbers %~ (Map.update (\v -> Just (v + 1)) n)
 
-getKeyEvent :: Key -> Maybe Int
-getKeyEvent (SpecialKey key) = 
-  let number = case key of
-                KeyF1 -> 1
-                KeyF2 -> 2
-                KeyF3 -> 3
-                KeyF4 -> 4
-                KeyF5 -> 5
-                KeyF6 -> 6
-                KeyF7 -> 7
-                KeyF8 -> 8
-                KeyF9 -> 9
-                _     -> -1
-  in if number > 0
-      then Just number
-      else Nothing
-getKeyEvent _ = Nothing
+getValueFromButton :: Char -> Maybe Int
+getValueFromButton button =
+  if isDigit button
+    then Just $ digitToInt button
+    else Nothing

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Common
   ( Difficulties (..)
   , Cell (..)
@@ -5,8 +7,19 @@ module Common
   , Field
   , CellCoord
   , CellValue
-  , SudokuEvent (..)
+  , OpenCellError (..)
+  , NewGameOption (..)
+
+  , GameEnv (..)
+  , builtField
+  , currentGameField
+  , numHolder
+  , level
   ) where
+
+import  Control.Lens.Combinators (makeLenses)
+import  qualified Data.Map.Strict as Map
+
 
 -- | Game Difficulties
 data Difficulties
@@ -22,7 +35,7 @@ type CellValue = Int
 -- | Field cell
 data Cell
   = Opened CellValue -- ^ opened cell
-  | Closed -- ^ closed cell
+  | Closed           -- ^ closed cell
   deriving Eq
 
 instance Show Cell where
@@ -41,5 +54,26 @@ type GameField = [[Cell]]
 type CellCoord = (Int, Int)
 
 
-data SudokuEvent
-  = OpenCell CellCoord CellValue
+-- | Game enviroment
+data GameEnv = GameEnv
+  { _builtField :: Field                      -- ^ generated field
+  , _currentGameField :: GameField            -- ^ current game state
+  , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
+  , _level :: Difficulties                    -- ^ game level
+  } deriving (Show, Eq)
+
+makeLenses ''GameEnv
+
+
+-- | Options for new game
+data NewGameOption
+  = SameLevel    -- ^ Same level
+  | NextLevel    -- ^ More difficult level
+  | PreviousLeve -- ^ Easier level
+  deriving (Show, Eq, Enum)
+
+-- | OpenCell's unsuccessful Options
+data OpenCellError
+  = WrongValue  -- ^ Cell had different value
+  | AlreadyOpen -- ^ Cell was opened
+  deriving (Show, Eq)

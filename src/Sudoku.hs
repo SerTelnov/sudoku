@@ -1,18 +1,14 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Sudoku
-  ( generateGame
+  ( runGame
   , makeGameEnv
-
-  , GameEnv (..)
-  , builtField
-  , currentGameField
-  , numHolder
+  , makeNewGame
   ) where
 
-import  Common                   (Difficulties (..), Cell (..), GameField, Field, CellCoord, CellValue)
+import  Common                   (Difficulties (..), Cell (..), GameField, Field, CellCoord, 
+                                  CellValue, NewGameOption (..), GameEnv (..))
 import  Generator.FieldGenerator (runFieldGenerator, baseField)
 import  Generator.GameGenerator  (generateGameField)
+import  UI.MainUI                (makeUI)
 
 import  Control.Monad.State      (State, evalState, get, put)
 import  Control.Lens.Combinators (makeLenses)
@@ -20,14 +16,15 @@ import  System.Random            (StdGen, randoms, randomRs, newStdGen)
 import  qualified Data.Map.Strict as Map
 
 
--- | Game enviroment
-data GameEnv = GameEnv
-  { _builtField :: Field -- ^ generated field
-  , _currentGameField :: GameField -- ^ current game state
-  , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
-  } deriving (Show, Eq)
+runGame :: Difficulties -> IO ()
+runGame diff = do
+  env <- makeNewGame diff
+  makeUI env
 
-makeLenses ''GameEnv
+makeNewGame :: Difficulties -> IO GameEnv
+makeNewGame diff = do
+  (field, gameField) <- generateGame Easy
+  return $ makeGameEnv field gameField diff
 
 
 generateRandomField :: StdGen -> IO Field
@@ -45,11 +42,11 @@ generateGame difficult = do
 
   return $ (genField, genGame)
 
-makeGameEnv :: Field -> GameField -> GameEnv
-makeGameEnv field gameField =
+makeGameEnv :: Field -> GameField -> Difficulties -> GameEnv
+makeGameEnv field gameField diff =
   let cells    = concat $ evalState (mapM collectCellCoord gameField) 0
       cellsMap = Map.fromList cells
-  in GameEnv field gameField cellsMap
+  in GameEnv field gameField cellsMap diff
   where
     collectCellCoord :: [Cell] -> State Int [(CellCoord, CellValue)]
     collectCellCoord row = do

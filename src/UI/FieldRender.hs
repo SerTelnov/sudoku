@@ -2,8 +2,8 @@ module UI.FieldRender
   ( renderField
   ) where
 
-import  Common (Cell (..), GameField, CellCoord, CellValue)
-import  Sudoku (GameEnv, GameEnv (..), currentGameField, numHolder)
+import  Common (Cell (..), GameField, CellCoord, CellValue,
+                GameEnv, GameEnv (..), currentGameField, numHolder)
 import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, blockCoordToXY, buttonToXY, buttonSize)
 import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers)
 

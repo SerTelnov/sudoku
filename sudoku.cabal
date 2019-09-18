@@ -37,6 +37,7 @@ library
   other-modules:
       Paths_sudoku
     , UI.FieldRender
+    , UI.InformationRender
     , UI.CoordinatesConverter
     , UI.Util
   hs-source-dirs:
