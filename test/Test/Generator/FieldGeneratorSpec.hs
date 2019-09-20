@@ -5,6 +5,8 @@ module Test.Generator.FieldGeneratorSpec
 import  Data.List                (transpose)
 import  Test.Hspec               (Spec, describe, it, shouldBe)
 import  Generator.FieldGenerator
+import  Generator.GeneratorUtil
+
 
 spec :: Spec
 spec = do

@@ -1,7 +1,11 @@
 module Main where
 
-import  Sudoku (runGame)
-import  Common (Difficulties (..))
+import  Sudoku    (makeNewGame)
+import  Common    (Difficulties (..))
+import  UI.MainUI (runUI)
+
 
 main :: IO ()
-main = runGame Normal
+main = do
+  env <- makeNewGame Normal
+  runUI env

@@ -3,11 +3,11 @@ module Generator.GameGenerator
   , generateGameField
   ) where
 
-import  Common              (Difficulties (..), Cell (..), GameField, Field)
-import  Control.Monad.State (State, evalState, get, put)
-import  Data.Set            (Set, fromList, member)
+import  Common                  (Difficulties (..), Cell (..), GameField, Field)
+import  Generator.GeneratorUtil (CellIndex)
 
-type CellIndex = Int
+import  Control.Monad.State     (State, evalState, get, put)
+import  Data.Set                (Set, fromList, member)
 
 
 generateGameField :: Field -> [CellIndex] -> Difficulties -> GameField

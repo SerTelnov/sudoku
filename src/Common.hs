@@ -15,7 +15,10 @@ module Common
   , currentGameField
   , numHolder
   , level
+  , genEnv
   ) where
+
+import  Generator.GeneratorUtil  (GeneratorEnv)
 
 import  Control.Lens.Combinators (makeLenses)
 import  qualified Data.Map.Strict as Map
@@ -60,7 +63,9 @@ data GameEnv = GameEnv
   , _currentGameField :: GameField            -- ^ current game state
   , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
   , _level :: Difficulties                    -- ^ game level
+  , _genEnv :: GeneratorEnv                   -- ^ random generator
   } deriving (Show, Eq)
+
 
 makeLenses ''GameEnv
 
@@ -69,7 +74,7 @@ makeLenses ''GameEnv
 data NewGameOption
   = SameLevel    -- ^ Same level
   | NextLevel    -- ^ More difficult level
-  | PreviousLeve -- ^ Easier level
+  | PreviousLevel -- ^ Easier level
   deriving (Show, Eq, Enum)
 
 -- | OpenCell's unsuccessful Options

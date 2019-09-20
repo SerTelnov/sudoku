@@ -1,52 +1,56 @@
 module Sudoku
-  ( runGame
-  , makeGameEnv
+  ( makeGameEnv
   , makeNewGame
+  , makeGame
   ) where
 
-import  Common                   (Difficulties (..), Cell (..), GameField, Field, CellCoord, 
-                                  CellValue, NewGameOption (..), GameEnv (..))
+import  Common  (Difficulties (..), Cell (..), GameField, Field, CellCoord,
+                  CellValue, NewGameOption (..), GameEnv (..))
+import  Generator.GeneratorUtil  (GeneratorEnv(..), GeneratorStep, CellIndex, generatorSteps, removeCells)
 import  Generator.FieldGenerator (runFieldGenerator, baseField)
 import  Generator.GameGenerator  (generateGameField)
-import  UI.MainUI                (makeUI)
 
 import  Control.Monad.State      (State, evalState, get, put)
 import  Control.Lens.Combinators (makeLenses)
+import  Control.Lens.Getter      ((^.))
 import  System.Random            (StdGen, randoms, randomRs, newStdGen)
 import  qualified Data.Map.Strict as Map
 
 
-runGame :: Difficulties -> IO ()
-runGame diff = do
-  env <- makeNewGame diff
-  makeUI env
+dropRandomValue :: [a] -> [a]
+dropRandomValue = drop 100
 
 makeNewGame :: Difficulties -> IO GameEnv
 makeNewGame diff = do
-  (field, gameField) <- generateGame Easy
-  return $ makeGameEnv field gameField diff
-
-
-generateRandomField :: StdGen -> IO Field
-generateRandomField gen = do
-  let randomSteps = take 100 $ randoms gen
-  return $ runFieldGenerator randomSteps baseField
-
-generateGame :: Difficulties -> IO (Field, GameField)
-generateGame difficult = do
   gen <- newStdGen
-  genField <- generateRandomField gen
+  let randomSteps   = randoms gen
+      cellsToRemove = randomRs (1, 81) gen
+      genEnv        = GeneratorEnv randomSteps cellsToRemove
+  return $ makeGame genEnv diff
 
-  let cellsToRemove = randomRs (1, 81) gen
-      genGame       = generateGameField genField cellsToRemove difficult
+makeGame :: GeneratorEnv -> Difficulties -> GameEnv
+makeGame genEnv diff =
+  let (restSteps, field)     = generateField (genEnv ^. generatorSteps)
+      (restCells, gameField) = generateGame (genEnv ^. removeCells) field diff
+  in makeGameEnv field gameField diff $ GeneratorEnv restSteps restCells
 
-  return $ (genField, genGame)
 
-makeGameEnv :: Field -> GameField -> Difficulties -> GameEnv
-makeGameEnv field gameField diff =
+generateField :: [GeneratorStep] -> ([GeneratorStep], Field)
+generateField steps =
+  let currSteps = take 100 steps
+      genField  = runFieldGenerator currSteps baseField
+ in (dropRandomValue steps, genField)
+
+generateGame :: [CellIndex] -> Field -> Difficulties -> ([CellIndex], GameField)
+generateGame cellsToRemove genField difficult =
+  let genGame = generateGameField genField cellsToRemove difficult
+  in (dropRandomValue cellsToRemove, genGame)
+
+makeGameEnv :: Field -> GameField -> Difficulties -> GeneratorEnv -> GameEnv
+makeGameEnv field gameField diff genEnv =
   let cells    = concat $ evalState (mapM collectCellCoord gameField) 0
       cellsMap = Map.fromList cells
-  in GameEnv field gameField cellsMap diff
+  in GameEnv field gameField cellsMap diff genEnv
   where
     collectCellCoord :: [Cell] -> State Int [(CellCoord, CellValue)]
     collectCellCoord row = do

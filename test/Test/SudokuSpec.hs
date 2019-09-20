@@ -6,8 +6,12 @@ import  Test.Hspec  (Spec, describe, it, shouldBe)
 import  Sudoku
 import  Common
 import  Control.Lens.Getter
+import  Generator.GeneratorUtil
 
 import  qualified Data.Map.Strict as Map
+
+testGameEnv :: Field -> GameField -> GameEnv
+testGameEnv field gameField = makeGameEnv field gameField Easy (GeneratorEnv [] [])
 
 spec :: Spec
 spec = do
@@ -15,7 +19,7 @@ spec = do
      it "Simple test" $ do
       let testField = [[1, 2], [3, 4]]
           gameField = [[Opened 1, Opened 2], [Opened 3, Opened 4]]
-          env       = makeGameEnv testField gameField
+          env       = testGameEnv testField gameField
       (env ^. numHolder) 
         `shouldBe` 
           Map.fromList
@@ -26,7 +30,7 @@ spec = do
     it "All cells opened test" $ do
       let testField = [[1, 2, 3], [3, 2, 1]]
           gameField = [[Opened 1, Opened 2, Opened 3], [Opened 3, Opened 2, Opened 1]]      
-          env       = makeGameEnv testField gameField
+          env       = testGameEnv testField gameField
       (env ^. numHolder)
         `shouldBe`
           Map.fromList
@@ -39,7 +43,7 @@ spec = do
     it "Some cells cloned test" $ do
       let testField = [[1, 2, 3], [3, 2, 1]]
           gameField = [[Opened 1, Closed, Opened 3], [Closed, Opened 2, Opened 1]]      
-          env       = makeGameEnv testField gameField
+          env       = testGameEnv testField gameField
       (env ^. numHolder)
         `shouldBe`
           Map.fromList

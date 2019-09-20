@@ -30,6 +30,7 @@ library
       Sudoku
     , Generator.FieldGenerator
     , Generator.GameGenerator
+    , Generator.GeneratorUtil
     , Common
     , UI.MainUI
     , EventHandler

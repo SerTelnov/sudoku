@@ -8,6 +8,9 @@ module UI.CoordinatesConverter
   , blockSize
   , cellSize
   , buttonSize
+
+  , startXPoint
+  , startYPoint
   ) where
 
 import  Common (CellCoord, CellValue)

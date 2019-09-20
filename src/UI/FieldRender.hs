@@ -4,16 +4,19 @@ module UI.FieldRender
 
 import  Common (Cell (..), GameField, CellCoord, CellValue,
                 GameEnv, GameEnv (..), currentGameField, numHolder)
-import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, blockCoordToXY, buttonToXY, buttonSize)
-import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), curTarget, uiEnv, gameEnv, countOfNumbers)
+import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, 
+                                  blockCoordToXY, buttonToXY, buttonSize)
+import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), 
+                  curTarget, uiEnv, gameEnv, countOfNumbers, wasMistake)
 
+import  Control.Monad.Reader (ReaderT, runReaderT, ask)
 import  Control.Monad.State (State, evalState, get, put)
 import  Control.Lens.Getter ((^.))
 
 import  qualified Data.Map.Strict as Map
 
 import  qualified Graphics.Gloss.Data.Picture as Pic
-import  Graphics.Gloss.Data.Color (black, greyN, white, withBlue)
+import  Graphics.Gloss.Data.Color (Color, black, greyN, white, withBlue, red, light)
 
 -- | State of cell
 data CellState
@@ -56,21 +59,25 @@ isSameLogicArea (Target (x, y)) (cx, cy) = x == cx || y == cy || isSameBlock
 renderField :: SudokuEnv -> Pic.Picture
 renderField env =
   let curField       = env ^. (gameEnv . currentGameField)
-      fieldPictures  = evalState (fieldToPictures curField) 0
+      isMistakeMod   = env ^. (uiEnv . wasMistake)
+
+      fieldPictures  = evalState (runReaderT (fieldToPictures curField) isMistakeMod) 0
       fieldPicture   = Pic.pictures fieldPictures
       buttonsPicture = renderButtons (env ^. uiEnv)
   in Pic.pictures $ fieldPicture : renderBlocks : buttonsPicture : []
   where
-    fieldToPictures :: GameField -> State Int [Pic.Picture]
+    fieldToPictures :: GameField -> ReaderT Bool (State Int) [Pic.Picture]
     fieldToPictures [] = return []
     fieldToPictures (row : rest) = do
+      isMistakeMod <- ask
       rowNum <- get
 
       let indexCells   = zip row [0 .. (length row - 1)]
           cellPictures = map (\(cell, column) ->
                           let (x, y) = cellCoordToXY (column, rowNum)
                               cellState = getCellState cell (column, rowNum)
-                          in Pic.translate x y (renderCell cell cellState)) indexCells
+                              cellColor = getCellColor cellState isMistakeMod
+                          in Pic.translate x y (renderCell cell cellColor)) indexCells
 
       put (rowNum + 1)
       next <- fieldToPictures rest
@@ -93,14 +100,16 @@ renderField env =
                 then SameLogicArea
                 else Simple
 
-    renderCell :: Cell -> CellState -> Pic.Picture
-    renderCell cell cellState =
-      let cellColor = case cellState of
-                        CurrentTarget      -> withBlue 0.8  white
-                        SameNumberAsTarget -> withBlue 0.9  white
-                        SameLogicArea      -> withBlue 0.95 white
-                        Simple             -> greyN 0.95
-          cellPictures = case cell of
+    getCellColor :: CellState -> Bool -> Color
+    getCellColor CurrentTarget False  = withBlue 0.75 white
+    getCellColor CurrentTarget True   = light red
+    getCellColor SameNumberAsTarget _ = withBlue 0.85 white
+    getCellColor SameLogicArea      _ = withBlue 0.95 white
+    getCellColor Simple             _ = greyN 0.95
+
+    renderCell :: Cell -> Color -> Pic.Picture
+    renderCell cell cellColor =
+      let cellPictures = case cell of
                           Opened n -> [ Pic.scale 0.25 0.15 $ Pic.color black $ Pic.text $ show n ]
                           Closed   -> []
       in Pic.Pictures $

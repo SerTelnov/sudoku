@@ -11,12 +11,12 @@ import  qualified Data.Map.Strict as Map
 import  Common
 import  EventHandler
 import  Sudoku
-
+import  Generator.GeneratorUtil
 
 testEnv :: GameEnv
 testEnv = let field     = [[1, 2], [2, 1]]
               gameField = [[Opened 1, Closed], [Opened 2, Closed]]
-          in makeGameEnv field gameField
+          in makeGameEnv field gameField Easy (GeneratorEnv [] [])
 
 spec :: Spec
 spec = do
