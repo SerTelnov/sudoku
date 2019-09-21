@@ -3,7 +3,6 @@ module Test.EventHandlerSpec
   ) where
 
 import  Control.Lens.Getter
-import  Data.List                (transpose)
 import  Test.Hspec               (Spec, describe, it, shouldBe)
 
 import  qualified Data.Map.Strict as Map

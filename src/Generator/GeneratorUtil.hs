@@ -11,7 +11,7 @@ module Generator.GeneratorUtil
   , removeCells
   ) where
 
-import  System.Random            (StdGen, Random, RandomGen, randomR, random)
+import  System.Random            (Random, RandomGen, randomR, random)
 import  Control.Lens.Combinators (makeLenses)
 
 type CellIndex = Int

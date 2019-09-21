@@ -59,4 +59,4 @@ xyToButton (x, y) =
      else Nothing
   where
     isButtonBlock :: Bool
-    isButtonBlock = (round $ (y - buttonStartYPoint) / buttonSize) == 0
+    isButtonBlock = (round $ (y - buttonStartYPoint) / buttonSize) == (0 :: Int)

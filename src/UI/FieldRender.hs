@@ -2,8 +2,7 @@ module UI.FieldRender
   ( renderField
   ) where
 
-import  Common (Cell (..), GameField, CellCoord, CellValue,
-                GameEnv, GameEnv (..), currentGameField, numHolder)
+import  qualified Common
 import  UI.CoordinatesConverter (cellCoordToXY, cellSize, blockSize, 
                                   blockCoordToXY, buttonToXY, buttonSize)
 import  UI.Util (Target (..), UIEnv (..), SudokuEnv (..), 
@@ -26,17 +25,17 @@ data CellState
   | Simple
   deriving (Show, Eq)
 
-isCurrentTarget :: Target -> CellCoord -> Bool
+isCurrentTarget :: Target -> Common.CellCoord -> Bool
 isCurrentTarget NoTarget               = \_ -> False
 isCurrentTarget (Target coord)         = (== coord)
 isCurrentTarget (NumberTarget coord _) = (== coord)
 
-isSameNumberAsTarger :: Target -> CellValue -> Bool
+isSameNumberAsTarger :: Target -> Common.CellValue -> Bool
 isSameNumberAsTarger NoTarget               = \_ -> False
 isSameNumberAsTarger (Target _)             = \_ -> False
 isSameNumberAsTarger (NumberTarget _ value) = (== value)
 
-isSameLogicArea :: Target -> CellCoord -> Bool
+isSameLogicArea :: Target -> Common.CellCoord -> Bool
 isSameLogicArea NoTarget _               = False
 isSameLogicArea (NumberTarget coord _) p = isSameLogicArea (Target coord) p
 isSameLogicArea (Target (x, y)) (cx, cy) = x == cx || y == cy || isSameBlock
@@ -58,7 +57,7 @@ isSameLogicArea (Target (x, y)) (cx, cy) = x == cx || y == cy || isSameBlock
 
 renderField :: SudokuEnv -> Pic.Picture
 renderField env =
-  let curField       = env ^. (gameEnv . currentGameField)
+  let curField       = env ^. (gameEnv . Common.currentGameField)
       isMistakeMod   = env ^. (uiEnv . wasMistake)
 
       fieldPictures  = evalState (runReaderT (fieldToPictures curField) isMistakeMod) 0
@@ -66,7 +65,7 @@ renderField env =
       buttonsPicture = renderButtons (env ^. uiEnv)
   in Pic.pictures $ fieldPicture : renderBlocks : buttonsPicture : []
   where
-    fieldToPictures :: GameField -> ReaderT Bool (State Int) [Pic.Picture]
+    fieldToPictures :: Common.GameField -> ReaderT Bool (State Int) [Pic.Picture]
     fieldToPictures [] = return []
     fieldToPictures (row : rest) = do
       isMistakeMod <- ask
@@ -83,17 +82,17 @@ renderField env =
       next <- fieldToPictures rest
       return $ cellPictures ++ next
 
-    getCellState :: Cell -> CellCoord -> CellState
+    getCellState :: Common.Cell -> Common.CellCoord -> CellState
     getCellState cell currCoord =
       let target = env ^. (uiEnv . curTarget)
       in if isCurrentTarget target currCoord
         then CurrentTarget
         else case cell of
-          Closed       -> 
+          Common.Closed       -> 
             if isSameLogicArea target currCoord
               then SameLogicArea
               else Simple
-          Opened value ->
+          Common.Opened value ->
             if isSameNumberAsTarger target value
               then SameNumberAsTarget
               else if isSameLogicArea target currCoord
@@ -107,11 +106,11 @@ renderField env =
     getCellColor SameLogicArea      _ = withBlue 0.95 white
     getCellColor Simple             _ = greyN 0.95
 
-    renderCell :: Cell -> Color -> Pic.Picture
+    renderCell :: Common.Cell -> Color -> Pic.Picture
     renderCell cell cellColor =
       let cellPictures = case cell of
-                          Opened n -> [ Pic.scale 0.25 0.15 $ Pic.color black $ Pic.text $ show n ]
-                          Closed   -> []
+                          Common.Opened n -> [ Pic.scale 0.25 0.15 $ Pic.color black $ Pic.text $ show n ]
+                          Common.Closed   -> []
       in Pic.Pictures $
         [ Pic.Color cellColor (Pic.rectangleSolid cellSize cellSize)
         , Pic.Color black     (Pic.rectangleWire cellSize cellSize) ]
@@ -135,7 +134,7 @@ renderButtons env =
       zipButtons = zip [1..9] buttonsXY
   in Pic.Pictures $ map (\(n, (x, y)) -> Pic.translate x y (buttonPicture n)) zipButtons
   where
-    buttonPicture :: CellValue -> Pic.Picture
+    buttonPicture :: Common.CellValue -> Pic.Picture
     buttonPicture n =
       let isActiveButton = (Map.findWithDefault 0 n (env ^. countOfNumbers)) /= 9
       in case isActiveButton of

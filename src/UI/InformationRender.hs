@@ -2,13 +2,13 @@ module UI.InformationRender
   ( renderInformation
   ) where
 
-import  Common (GameEnv, GameEnv (..), level)
+import  Common                  (level)
 import  UI.CoordinatesConverter (startXPoint, startYPoint)
-import  UI.Util (UIEnv (..), SudokuEnv (..), uiEnv, gameEnv, numberOfMistakes)
+import  UI.Util                 (SudokuEnv (..), uiEnv, gameEnv, numberOfMistakes)
 
 import  Control.Lens.Getter ((^.))
 
-import  Graphics.Gloss.Data.Color (black, greyN, white, withBlue)
+import  Graphics.Gloss.Data.Color (black)
 import  qualified Graphics.Gloss.Data.Picture as Pic
 
 

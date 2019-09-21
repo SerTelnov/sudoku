@@ -3,50 +3,48 @@ module EventHandler
   , restartGame
   ) where
 
-import  Common        (Cell (..), GameField, CellCoord, CellValue, OpenCellError (..), NewGameOption (..),
-                        GameEnv (..), Difficulties (..), currentGameField, numHolder, builtField)
 import  Generator.GeneratorUtil (GeneratorEnv (..))
 import  Sudoku                  (makeGame)
-import  System.Random           (StdGen)
+import  qualified Common as Com
 
 import  Control.Lens.Getter ((^.))
 import  Control.Lens.Setter ((.~), (%~))
-import  Data.Function ((&))
+import  Data.Function       ((&))
 
 import  qualified Data.Map.Strict as Map
 
 
-restartGame :: GeneratorEnv -> Difficulties -> NewGameOption -> GameEnv
+restartGame :: GeneratorEnv -> Com.Difficulties -> Com.NewGameOption -> Com.GameEnv
 restartGame genEnv diff option = makeGame genEnv $ getNewDiff diff option
   where
-    getNewDiff :: Difficulties -> NewGameOption -> Difficulties
-    getNewDiff diff' SameLevel     = diff'
-    getNewDiff Easy  PreviousLevel = Easy
-    getNewDiff diff' PreviousLevel = toEnum $ fromEnum diff' - 1
-    getNewDiff Hard  NextLevel     = Hard
-    getNewDiff diff' NextLevel     = toEnum $ fromEnum diff' + 1
+    getNewDiff :: Com.Difficulties -> Com.NewGameOption -> Com.Difficulties
+    getNewDiff diff' Com.SameLevel         = diff'
+    getNewDiff Com.Easy  Com.PreviousLevel = Com.Easy
+    getNewDiff diff' Com.PreviousLevel     = toEnum $ fromEnum diff' - 1
+    getNewDiff Com.Hard  Com.NextLevel     = Com.Hard
+    getNewDiff diff' Com.NextLevel         = toEnum $ fromEnum diff' + 1
 
-openCell :: GameEnv -> CellCoord -> CellValue -> Either OpenCellError GameEnv
+openCell :: Com.GameEnv -> Com.CellCoord -> Com.CellValue -> Either Com.OpenCellError Com.GameEnv
 openCell env coord@(columnIndex, rowIndex) value =
-  let cell        = ((env ^. currentGameField) !! rowIndex) !! columnIndex
-      actualValue = ((env ^. builtField) !! rowIndex) !! columnIndex
+  let cell        = ((env ^. Com.currentGameField) !! rowIndex) !! columnIndex
+      actualValue = ((env ^. Com.builtField) !! rowIndex) !! columnIndex
   in case cell of
-    Opened _ -> Left AlreadyOpen
-    Closed   -> if value == actualValue
+    Com.Opened _ -> Left Com.AlreadyOpen
+    Com.Closed   -> if value == actualValue
                   then Right updEnv
-                  else Left WrongValue
+                  else Left Com.WrongValue
   where
-    updEnv :: GameEnv
+    updEnv :: Com.GameEnv
     updEnv =
-      let newField = updGameField (env ^. currentGameField)
+      let newField = updGameField (env ^. Com.currentGameField)
       in env
-         & currentGameField .~ newField
-         & numHolder %~ (Map.insert coord value)
+         & Com.currentGameField .~ newField
+         & Com.numHolder %~ (Map.insert coord value)
 
-    updGameField :: GameField -> GameField
+    updGameField :: Com.GameField -> Com.GameField
     updGameField field =
       let (a, b)   = splitAt rowIndex field
           currRow  = head b
           (ai, bi) = splitAt columnIndex currRow
-          updRow   = ai ++ (Opened value : (tail bi))
+          updRow   = ai ++ (Com.Opened value : (tail bi))
       in a ++ (updRow : (tail b))

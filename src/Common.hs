@@ -63,9 +63,8 @@ data GameEnv = GameEnv
   , _currentGameField :: GameField            -- ^ current game state
   , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
   , _level :: Difficulties                    -- ^ game level
-  , _genEnv :: GeneratorEnv                   -- ^ random generator
+  , _genEnv :: GeneratorEnv                   -- ^ values to make new games
   } deriving (Show, Eq)
-
 
 makeLenses ''GameEnv
 

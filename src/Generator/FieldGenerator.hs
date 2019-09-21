@@ -5,12 +5,12 @@ module Generator.FieldGenerator
     , baseField
     ) where
 
-import  Data.List               (transpose)
 import  Common                  (Field)
 import  Generator.GeneratorUtil (AreaNumber, SwapOption (..), GeneratorStep (..))
+
+import  Data.List               (transpose)
 import  Control.Monad.State     (State, evalState, get, put, execState)
 import  Control.Monad.Reader    (ReaderT, runReaderT, asks)
-import  System.Random           (Random, RandomGen, random, randomR)
 
 
 -- | Base field
