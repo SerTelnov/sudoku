@@ -59,11 +59,11 @@ type CellCoord = (Int, Int)
 
 -- | Game enviroment
 data GameEnv = GameEnv
-  { _builtField :: Field                      -- ^ generated field
-  , _currentGameField :: GameField            -- ^ current game state
-  , _numHolder :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
-  , _level :: Difficulties                    -- ^ game level
-  , _genEnv :: GeneratorEnv                   -- ^ values to make new games
+  { _builtField       :: Field                       -- ^ generated field
+  , _currentGameField :: GameField                   -- ^ current game state
+  , _numHolder        :: Map.Map CellCoord CellValue -- ^ mapper for opened cells
+  , _level            :: Difficulties                -- ^ game level
+  , _genEnv           :: GeneratorEnv                -- ^ values to make new games
   } deriving (Show, Eq)
 
 makeLenses ''GameEnv
@@ -71,8 +71,8 @@ makeLenses ''GameEnv
 
 -- | Options for new game
 data NewGameOption
-  = SameLevel    -- ^ Same level
-  | NextLevel    -- ^ More difficult level
+  = SameLevel     -- ^ Same level
+  | NextLevel     -- ^ More difficult level
   | PreviousLevel -- ^ Easier level
   deriving (Show, Eq, Enum)
 

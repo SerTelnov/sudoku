@@ -20,7 +20,7 @@ import  qualified Data.Map.Strict as Map
 import  Graphics.Gloss                      (play, Display ( InWindow ))
 import  Graphics.Gloss.Data.Color           (greyN)
 import  Graphics.Gloss.Data.Picture         (Picture ( Pictures ))
-import  Graphics.Gloss.Interface.IO.Interact
+import  qualified Graphics.Gloss.Interface.IO.Interact as GI
 
 
 runUI :: Com.GameEnv -> IO ()
@@ -62,8 +62,8 @@ renderWorld env = Pictures
     [ renderField env
     , renderInformation env ]
 
-handleUIEvent :: Event -> SudokuEnv -> SudokuEnv
-handleUIEvent (EventKey (MouseButton LeftButton) Down _ point) env = 
+handleUIEvent :: GI.Event -> SudokuEnv -> SudokuEnv
+handleUIEvent (GI.EventKey (GI.MouseButton GI.LeftButton) GI.Down _ point) env = 
   let maybeCell = xyToCellCoord point
   in case maybeCell of
     Nothing    -> tryOpenCell (xyToButton point) env
@@ -75,13 +75,13 @@ handleUIEvent (EventKey (MouseButton LeftButton) Down _ point) env =
       in env 
         & uiEnv . curTarget .~ newTarget
         & uiEnv . wasMistake .~ False
-handleUIEvent (EventKey (Char key) Down (Modifiers { shift = Down }) _) env = 
+handleUIEvent (GI.EventKey (GI.Char key) GI.Down (GI.Modifiers { GI.shift = GI.Down }) _) env = 
   case key of
     'N' -> restartUIGame env Com.SameLevel
     'E' -> restartUIGame env Com.PreviousLevel
     'H' -> restartUIGame env Com.NextLevel
     _   -> env
-handleUIEvent (EventKey (Char key) Down _ _) env =
+handleUIEvent (GI.EventKey (GI.Char key) GI.Down _ _) env =
   tryOpenCell (getValueFromButton key) env
 handleUIEvent _ env = env
 

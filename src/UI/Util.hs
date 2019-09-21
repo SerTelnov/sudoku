@@ -26,16 +26,16 @@ data Target
   deriving (Eq, Show)
 
 data UIEnv = UIEnv
-  { _curTarget :: Target
-  , _countOfNumbers :: Map.Map CellValue Int
+  { _curTarget        :: Target
+  , _countOfNumbers   :: Map.Map CellValue Int
   , _numberOfMistakes :: Int
-  , _wasMistake :: Bool
+  , _wasMistake       :: Bool
   } deriving (Show)
 
 makeLenses ''UIEnv
 
 data SudokuEnv = SudokuEnv
-  { _uiEnv :: UIEnv
+  { _uiEnv   :: UIEnv
   , _gameEnv :: GameEnv 
   } deriving (Show)
 
